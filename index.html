@@ -87,7 +87,7 @@
       <div class="flex items-center gap-2"><span class="text-2xl sm:text-3xl">🍔</span>
        <h1 id="app-title" class="text-lg sm:text-xl md:text-2xl font-bold" style="color: #FFFFFF;">Burger Diary 2026</h1>
       </div><!-- Desktop Navigation -->
-      <div class="hidden md:flex gap-2 lg:gap-4"><button onclick="showView('home')" class="nav-btn px-3 lg:px-4 py-2 rounded-lg font-semibold transition-all text-sm lg:text-base" style="color: #FFFFFF;"> Inicio </button> <button onclick="showView('add')" class="nav-btn px-3 lg:px-4 py-2 rounded-lg font-semibold transition-all text-sm lg:text-base" style="color: #FFFFFF;"> Agregar 🍔 </button> <button onclick="showView('list')" class="nav-btn px-3 lg:px-4 py-2 rounded-lg font-semibold transition-all text-sm lg:text-base" style="color: #FFFFFF;"> Registro </button> <button onclick="showView('recap')" class="nav-btn px-3 lg:px-4 py-2 rounded-lg font-semibold transition-all text-sm lg:text-base" style="color: #FFFFFF;"> Recap 2026 </button>
+      <div class="hidden md:flex gap-2 lg:gap-4"><button id="nav-home" onclick="showView('home')" class="nav-btn px-3 lg:px-4 py-2 rounded-lg font-semibold transition-all text-sm lg:text-base" style="color: #FFFFFF; background-color: rgba(255, 255, 255, 0.2);"> Inicio </button> <button id="nav-add" onclick="showView('add')" class="nav-btn px-3 lg:px-4 py-2 rounded-lg font-semibold transition-all text-sm lg:text-base" style="color: #FFFFFF;"> Agregar 🍔 </button> <button id="nav-list" onclick="showView('list')" class="nav-btn px-3 lg:px-4 py-2 rounded-lg font-semibold transition-all text-sm lg:text-base" style="color: #FFFFFF;"> Registro </button> <button id="nav-recap" onclick="showView('recap')" class="nav-btn px-3 lg:px-4 py-2 rounded-lg font-semibold transition-all text-sm lg:text-base" style="color: #FFFFFF;"> Recap 2026 </button>
       </div><!-- Mobile Menu Button --> <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg" style="color: #FFFFFF;" onclick="toggleMobileMenu()">
        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
        </svg></button>
@@ -164,7 +164,7 @@
        </div>
        <div><label for="acompanamiento" class="block text-sm font-semibold mb-2" style="color: #8B4513;">🍟 Acompañamiento</label> <input type="text" id="acompanamiento" required placeholder="Ej: papas fritas, batatas, nada..." class="w-full px-4 py-2 rounded-lg border-2 focus:outline-none focus:border-orange-500" style="border-color: #FFD700;">
        </div>
-       <div><label for="sabor" class="block text-sm font-semibold mb-2" style="color: #8B4513;">😋 Sabor (1-10)</label> <input type="number" id="sabor" required min="1" max="10" step="1" class="w-full px-4 py-2 rounded-lg border-2 focus:outline-none focus:border-orange-500" style="border-color: #FFD700;">
+       <div><label for="sabor" class="block text-sm font-semibold mb-2" style="color: #8B4513;">😋 Sabor (1-10)</label> <input type="number" id="sabor" required min="1" max="10" step="1" value="5" class="w-full px-4 py-2 rounded-lg border-2 focus:outline-none focus:border-orange-500" style="border-color: #FFD700;">
        </div>
        <div><label class="block text-sm font-semibold mb-2" style="color: #8B4513;">⭐ Puntuación final</label>
         <div class="star-rating mb-2" id="star-rating"><span class="star" data-value="1">☆</span> <span class="star" data-value="2">☆</span> <span class="star" data-value="3">☆</span> <span class="star" data-value="4">☆</span> <span class="star" data-value="5">☆</span> <span class="star" data-value="6">☆</span> <span class="star" data-value="7">☆</span> <span class="star" data-value="8">☆</span> <span class="star" data-value="9">☆</span> <span class="star" data-value="10">☆</span>
@@ -410,26 +410,42 @@
     }
 
     function setupStarRating() {
-      const stars = document.querySelectorAll('.star');
+      const stars = document.querySelectorAll('#star-rating .star');
       const puntuacionInput = document.getElementById('puntuacion');
 
       stars.forEach(star => {
         star.addEventListener('click', () => {
-          const value = star.getAttribute('data-value');
+          const value = parseInt(star.getAttribute('data-value'));
           puntuacionInput.value = value;
-          updateStars(value);
+          updateStars(value, stars);
+        });
+
+        star.addEventListener('mouseenter', () => {
+          const value = parseInt(star.getAttribute('data-value'));
+          updateStars(value, stars);
         });
       });
 
+      document.getElementById('star-rating').addEventListener('mouseleave', () => {
+        const currentValue = parseInt(puntuacionInput.value) || 0;
+        updateStars(currentValue, stars);
+      });
+
       puntuacionInput.addEventListener('input', (e) => {
-        const value = Math.floor(e.target.value);
-        updateStars(value);
+        const value = Math.floor(parseFloat(e.target.value)) || 0;
+        updateStars(value, stars);
+      });
+
+      puntuacionInput.addEventListener('change', (e) => {
+        const value = parseFloat(e.target.value);
+        if (value < 1) e.target.value = 1;
+        if (value > 10) e.target.value = 10;
+        updateStars(Math.floor(e.target.value), stars);
       });
     }
 
-    function updateStars(rating) {
-      const stars = document.querySelectorAll('.star');
-      stars.forEach((star, index) => {
+    function updateStars(rating, starsNodeList) {
+      starsNodeList.forEach((star, index) => {
         if (index < rating) {
           star.textContent = '★';
           star.style.color = '#FFD700';
@@ -446,6 +462,20 @@
         
         if (allBurgers.length >= 999) {
           showToast('Has alcanzado el límite de 999 hamburguesas. Eliminá algunas para continuar.', 'error');
+          return;
+        }
+
+        // Validar campos
+        const sabor = parseInt(document.getElementById('sabor').value);
+        const puntuacion = parseFloat(document.getElementById('puntuacion').value);
+        
+        if (sabor < 1 || sabor > 10) {
+          showToast('El sabor debe estar entre 1 y 10', 'error');
+          return;
+        }
+        
+        if (puntuacion < 1 || puntuacion > 10) {
+          showToast('La puntuación debe estar entre 1 y 10', 'error');
           return;
         }
 
@@ -471,13 +501,13 @@
           id: Date.now().toString(),
           fecha: document.getElementById('fecha').value,
           tipo: document.getElementById('tipo').value,
-          lugar: document.getElementById('lugar').value,
-          medallon: document.getElementById('medallon').value,
-          ingredientes: document.getElementById('ingredientes').value,
-          acompanamiento: document.getElementById('acompanamiento').value,
-          sabor: parseInt(document.getElementById('sabor').value),
-          puntuacion: parseFloat(document.getElementById('puntuacion').value),
-          comentarios: document.getElementById('comentarios').value,
+          lugar: document.getElementById('lugar').value.trim(),
+          medallon: document.getElementById('medallon').value.trim(),
+          ingredientes: document.getElementById('ingredientes').value.trim(),
+          acompanamiento: document.getElementById('acompanamiento').value.trim(),
+          sabor: sabor,
+          puntuacion: puntuacion,
+          comentarios: document.getElementById('comentarios').value.trim(),
           foto: fotoBase64,
           createdAt: new Date().toISOString()
         };
@@ -491,8 +521,13 @@
             document.getElementById('foto-preview').classList.add('hidden');
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('fecha').value = today;
-            updateStars(0);
-            showView('home');
+            document.getElementById('sabor').value = 5;
+            const stars = document.querySelectorAll('#star-rating .star');
+            updateStars(0, stars);
+            
+            setTimeout(() => {
+              showView('list');
+            }, 1500);
           } else {
             showToast('Error al guardar la hamburguesa', 'error');
           }
@@ -506,6 +541,20 @@
         e.preventDefault();
         
         if (!currentEditBurger) return;
+
+        // Validar campos
+        const sabor = parseInt(document.getElementById('edit-sabor').value);
+        const puntuacion = parseFloat(document.getElementById('edit-puntuacion').value);
+        
+        if (sabor < 1 || sabor > 10) {
+          showToast('El sabor debe estar entre 1 y 10', 'error');
+          return;
+        }
+        
+        if (puntuacion < 1 || puntuacion > 10) {
+          showToast('La puntuación debe estar entre 1 y 10', 'error');
+          return;
+        }
 
         const submitBtn = document.getElementById('edit-submit-btn');
         submitBtn.disabled = true;
@@ -529,13 +578,13 @@
           ...currentEditBurger,
           fecha: document.getElementById('edit-fecha').value,
           tipo: document.getElementById('edit-tipo').value,
-          lugar: document.getElementById('edit-lugar').value,
-          medallon: document.getElementById('edit-medallon').value,
-          ingredientes: document.getElementById('edit-ingredientes').value,
-          acompanamiento: document.getElementById('edit-acompanamiento').value,
-          sabor: parseInt(document.getElementById('edit-sabor').value),
-          puntuacion: parseFloat(document.getElementById('edit-puntuacion').value),
-          comentarios: document.getElementById('edit-comentarios').value,
+          lugar: document.getElementById('edit-lugar').value.trim(),
+          medallon: document.getElementById('edit-medallon').value.trim(),
+          ingredientes: document.getElementById('edit-ingredientes').value.trim(),
+          acompanamiento: document.getElementById('edit-acompanamiento').value.trim(),
+          sabor: sabor,
+          puntuacion: puntuacion,
+          comentarios: document.getElementById('edit-comentarios').value.trim(),
           foto: fotoBase64
         };
 
@@ -543,7 +592,7 @@
           const result = await window.dataSdk.update(updatedBurger);
           
           if (result.isOk) {
-            showToast('✅ Hamburguesa actualizada', 'success');
+            showToast('✅ Hamburguesa actualizada exitosamente', 'success');
             closeEditModal();
           } else {
             showToast('Error al actualizar', 'error');
@@ -570,8 +619,29 @@
       document.querySelectorAll('.view').forEach(view => view.classList.add('hidden'));
       document.getElementById(`${viewName}-view`).classList.remove('hidden');
       
+      // Update active nav button
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.style.backgroundColor = '';
+      });
+      
+      const navBtn = document.getElementById(`nav-${viewName}`);
+      if (navBtn) {
+        navBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+      }
+      
       if (viewName === 'recap') {
         updateRecapView();
+      }
+      
+      if (viewName === 'add') {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('fecha').value = today;
+        document.getElementById('burger-form').reset();
+        document.getElementById('fecha').value = today;
+        document.getElementById('sabor').value = 5;
+        document.getElementById('foto-preview').classList.add('hidden');
+        const stars = document.querySelectorAll('#star-rating .star');
+        updateStars(0, stars);
       }
       
       window.scrollTo(0, 0);
@@ -826,5 +896,5 @@
 
     document.addEventListener('DOMContentLoaded', initApp);
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9b95b1c2806f7f30',t:'MTc2NzY0NDYxNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ba88dd4c7307f30',t:'MTc2Nzg0MjM3NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
