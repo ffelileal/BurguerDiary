@@ -259,6 +259,53 @@
     let allBurgers = [];
     let currentEditBurger = null;
 
+    // Fallback local dataSdk usando localStorage si no hay dataSdk externo
+    (function setupLocalDataSdkIfMissing(){
+      if (window.dataSdk) return;
+      const STORAGE_KEY = 'burgers_v1';
+      let handler = null;
+
+      function saveStore() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(allBurgers)); } catch(e){} }
+      function loadStore() {
+        try {
+          const s = localStorage.getItem(STORAGE_KEY);
+          allBurgers = s ? JSON.parse(s) : [];
+        } catch(e) { allBurgers = []; }
+      }
+
+      window.dataSdk = {
+        async init(dataHandler) {
+          handler = dataHandler;
+          loadStore();
+          if (handler && typeof handler.onDataChanged === 'function') handler.onDataChanged(allBurgers);
+          return { isOk: true };
+        },
+        async create(burger) {
+          burger.__backendId = burger.id || Date.now().toString();
+          allBurgers.push(burger);
+          saveStore();
+          if (handler && typeof handler.onDataChanged === 'function') handler.onDataChanged(allBurgers);
+          return { isOk: true };
+        },
+        async update(updatedBurger) {
+          const idx = allBurgers.findIndex(b => b.__backendId === updatedBurger.__backendId || b.id === updatedBurger.id);
+          if (idx === -1) return { isOk: false };
+          allBurgers[idx] = updatedBurger;
+          saveStore();
+          if (handler && typeof handler.onDataChanged === 'function') handler.onDataChanged(allBurgers);
+          return { isOk: true };
+        },
+        async delete(burger) {
+          const idx = allBurgers.findIndex(b => b.__backendId === burger.__backendId || b.id === burger.id);
+          if (idx === -1) return { isOk: false };
+          allBurgers.splice(idx, 1);
+          saveStore();
+          if (handler && typeof handler.onDataChanged === 'function') handler.onDataChanged(allBurgers);
+          return { isOk: true };
+        }
+      };
+    })();
+
     const defaultConfig = {
       app_title: "Burger Diary 2026",
       welcome_message: "Tu diario personal gastronómico",
